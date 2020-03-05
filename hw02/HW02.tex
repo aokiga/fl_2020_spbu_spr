@@ -35,14 +35,154 @@ initial text={}
 \bigskip
 
 \begin{enumerate}
-  \item Доказать или опровергнуть утверждение: произведение двух минимальных автоматов всегда дает минимальный автомат (рассмотреть случаи для пересечения, объединения и разности языков).
+  \item Доказать или опровергнуть утверждение: произведение двух минимальных автоматов всегда дает минимальный автомат (рассмотреть случаи для пересечения, объединения и разности языков).\\
+  {\bf Решение}\\
+  Ответ: Нет.\\
+  \begin{enumerate} 
+     \item Для объединения.\\
+     Возьмем в качестве первого языка $L_1 = 1^{2n}$ и в качестве второго $L_2 = 1^{2n + 1}$\\
+     Min ДКА для $L_1$:
+     \begin{myauto}
+     	\node [state, initial, accepting]   (S) {$S$};
+     	\node [state] (T) [right=of S] {$T$};
+     	
+     	\path[->]
+     	(S) edge [bend left=15] node [above] {$1$} (T)
+     	(T) edge [bend left=15] node [below] {$1$} (S)
+     	;
+     \end{myauto}
+     Min ДКА для $L_2$:
+     \begin{myauto}
+     	\node [state, initial]   (S) {$S$};
+     	\node [state, accepting] (T) [right=of S] {$T$};
+     	
+     	\path[->]
+     	(S) edge [bend left=15] node [above] {$1$} (T)
+     	(T) edge [bend left=15] node [below] {$1$} (S)
+     	;
+     \end{myauto}
+     
+     Их произведение для объединения:
+	 \begin{myauto}
+	 	\node [state, initial, accepting] (Q11)                {$S_1T_1$};
+	 	\node [state, accepting]          (Q21) [below=of Q11] {$S_2T_1$};
+	 	\node [state, accepting]          (Q12) [right=of Q11] {$S_1T_2$};
+	 	\node [state, accepting]          (Q22) [right=of Q21] {$S_2T_2$};
+	 	
+	 	\path[->]
+	 	(Q11) edge [bend left=15] node [above] {$1$} (Q22)
+	 	(Q22) edge [bend left=15] node [below] {$1$} (Q11)
+	 	(Q12) edge [bend left=15] node [above] {$1$} (Q21)
+	 	(Q21) edge [bend left=15] node [below] {$1$} (Q12)
+	 	;
+	 \end{myauto}
+     Min ДКА для объединения:
+     \begin{myauto}
+     	\node [state, initial, accepting] (S) {$S$};
+     	
+     	\path[->]
+     	(S) edge [loop above] node [above] {$1$} ()
+     	;
+     \end{myauto}
+ 	 \item Для пересечения:\\
+ 	 Возьмем такие же $L_1$ и $L_2$.\\
+ 	 Их произведение для пересечения:
+	 \begin{myauto}
+	 	\node [state, initial]   (Q11)                {$S_1T_1$};
+	 	\node [state] (Q21) [below=of Q11] {$S_2T_1$};
+	 	\node [state, accepting] (Q12) [right=of Q11] {$S_1T_2$};
+	 	\node [state]            (Q22) [right=of Q21] {$S_2T_2$};
+	 	
+	 	\path[->]
+	 	(Q11) edge [bend left=15] node [above] {$1$} (Q22)
+	 	(Q22) edge [bend left=15] node [below] {$1$} (Q11)
+	 	(Q12) edge [bend left=15] node [above] {$1$} (Q21)
+	 	(Q21) edge [bend left=15] node [below] {$1$} (Q12)
+	 	;
+	 \end{myauto}
+	 
+ 	 Min ДКА для пересечения:
+  	 \begin{myauto}
+  	 	\node [state, initial]   (S) {$S$};
+  	 	
+  	 	\path[->]
+  	 	(S) edge [loop above] node [above] {$1$} ()
+  	 	;
+  	 \end{myauto}
+     \item Для разности:\\
+     Возьмем произведение двух автоматов для языка $L = 1^{2n + 1}$.\\
+     Их произведение:
+      \begin{myauto}
+      	\node [state, initial]   (Q11)                {$S_1T_1$};
+      	\node [state, accepting] (Q21) [below=of Q11] {$S_2T_1$};
+      	\node [state]            (Q12) [right=of Q11] {$S_1T_2$};
+      	\node [state]            (Q22) [right=of Q21] {$S_2T_2$};
+      	
+      	\path[->]
+      	(Q11) edge [bend left=15] node [above] {$1$} (Q22)
+      	(Q22) edge [bend left=15] node [below] {$1$} (Q11)
+      	(Q12) edge [bend left=15] node [above] {$1$} (Q21)
+      	(Q21) edge [bend left=15] node [below] {$1$} (Q12)
+      	;
+      \end{myauto}
+     Min ДКА для разности:
+     \begin{myauto}
+     	\node [state, initial]   (S) {$S$};
+     	
+     	\path[->]
+     	(S) edge [loop above] node [above] {$1$} ()
+     	;
+     \end{myauto}
+	\end{enumerate}
+  
   \item Для регулярного выражения:
    \[ (a \mid b)^+ (aa \mid bb \mid abab \mid baba)^* (a \mid b)^+\]
-  Построить эквивалентные:
+  Построить эквивалентные:\\
+  {\bf Решение}\\
+  Эта регулярка эквивалетна $(a \mid b)^+ (a \mid b)^+$.
   \begin{enumerate}
-    \item Недетерминированный конечный автомат
-    \item Недетерминированный конечный автомат без $\varepsilon$-переходов
-    \item Минимальный полный детерминированный конечный автомат
+    \item Недетерминированный конечный автомат\\
+    {\bf Решение}\\
+    	\begin{myauto}
+    		\node [state, initial]   (q_{0}) {$q_{s}$};
+    		\node [state]            (q_{1}) [right=of q_{0}] {$q_{1}$};
+    		\node [state, accepting] (q_{2}) [right=of q_{1}] {$q_{t}$};
+    		
+    		\path[->]
+    		(q_{0}) edge              node [above] {$a, b$} (q_{1})
+    		(q_{1}) edge [loop above] node [above] {$a, b$} ()
+    		(q_{1}) edge              node [above] {$a, b$} (q_{2})
+    		(q_{2}) edge [loop above] node [above] {$a, b$} ()
+    		;
+    	\end{myauto}
+   	\item Недетерминированный конечный автомат без $\varepsilon$-переходов\\
+    {\bf Решение}\\
+	    \begin{myauto}
+	    	\node [state, initial]   (q_{0}) {$q_{s}$};
+	    	\node [state]            (q_{1}) [right=of q_{0}] {$q_{1}$};
+	    	\node [state, accepting] (q_{2}) [right=of q_{1}] {$q_{t}$};
+	    	
+	    	\path[->]
+	    	(q_{0}) edge              node [above] {$a, b$} (q_{1})
+	    	(q_{1}) edge [loop above] node [above] {$a, b$} ()
+	    	(q_{1}) edge              node [above] {$a, b$} (q_{2})
+	    	(q_{2}) edge [loop above] node [above] {$a, b$} ()
+	    	;
+	    \end{myauto}
+    \item Минимальный полный детерминированный конечный автомат\\
+    {\bf Решение}\\
+	    \begin{myauto}
+	    	\node [state, initial]   (q_{0}) {$q_{s}$};
+	    	\node [state]            (q_{1}) [right=of q_{0}] {$q_{1}$};
+	    	\node [state, accepting] (q_{2}) [right=of q_{1}] {$q_{t}$};
+	    	
+	    	\path[->]
+	    	(q_{0}) edge              node [above] {$a, b$} (q_{1})
+	    	(q_{1}) edge              node [above] {$a, b$} (q_{2})
+	    	(q_{2}) edge [loop above] node [above] {$a, b$} ()
+	    	;
+	    \end{myauto}
+
   \end{enumerate}
   \item Построить регулярное выражение, распознающее тот же язык, что и автомат:
   \begin{myauto}
@@ -64,8 +204,26 @@ initial text={}
                     edge              node [above] {$c$}       (q_4)
     ;
   \end{myauto}
-  \item Определить, является ли автоматным язык $\{ \omega \omega^r \mid \omega \in \{ 0, 1 \}^* \}$. Если является --- построить автомат, иначе --- доказать.
-  \item Определить, является ли автоматным язык $\{ u a a v \mid u, v \in \{ a, b \}^* , |u|_b \geq |v|_a \}$. Если является --- построить автомат, иначе --- доказать.
+  {\bf Решение}\\
+  \[(a\mid b \mid c)^*((a(b\mid c)^*a) \mid (b(a\mid c)^*b) \mid (c(a\mid b)^*c))\]
+  
+  \item Определить, является ли автоматным язык $\{ \omega \omega^r \mid \omega \in \{ 0, 1 \}^* \}$. Если является --- построить автомат, иначе --- доказать.\\
+  {\bf Решение}\\
+  Пусть L - автоматный. Тогда для него верна лемма о накачке.\\
+  Возьмем n из леммы и возьмем слово $\alpha = (1)^n00(1)^n$.\\
+  Мы знаем что есть слова $u, v, w \in L$, такие что $|uv| \le n, |v| \ge 1$\\
+  Тогда $|v| = \{1\}^+$. Рассмотрим слово $uvvw = (1)^{n + |v|}00(1)^n$, оно должно лежать в языке по лемме.\\
+  Но, с другой стороны, это слово не является палиндромом.\\
+  Противоречие.
+  
+  \item Определить, является ли автоматным язык $\{ u a a v \mid u, v \in \{ a, b \}^* , |u|_b \geq |v|_a \}$. Если является --- построить автомат, иначе --- доказать.\\
+  {\bf Решение}\\
+  Пусть L - автоматный. Тогда для него верна лемма о накачке.\\
+  Возьмем n из леммы и возьмем слово $\alpha = (b)^naa(ba)^n$.\\
+  Мы знаем что есть слова $u, v, w \in L$, такие что $|uv| \le n, |v| \ge 1$\\
+  Тогда $v \in \{b\}^+$. Рассмотрим $uw = (b)^{n - |v|}aa(ba)^n$, оно должно лежать в языке по лемме.\\
+  Но, с другой стороны, его нельзя представить в виде двух слов U и V, что $uw = UaaV,\ |U|_b \ge |U|_a$, так как  $(n - |v| = |U|_b < |U|_a = n)$.\\
+  Противоречие.
 \end{enumerate}
 
 \newpage
