@@ -1,8 +1,8 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..))
-import           Combinators (Parser (..), Result (..), elem', fail', satisfy, success, symbol)
-import           Data.Char   (digitToInt, isDigit)
+import           Combinators (Parser (..), Result (..), elem', fail', satisfy, success, symbol, matchString)
+import           Data.Char   (digitToInt, isDigit, isLetter)
 
 import           Control.Applicative
 
@@ -39,35 +39,62 @@ uberExpr ((p, assoc):rest) elemP makeAST = case assoc of
 -- Парсер для выражений над +, -, *, /, ^ (возведение в степень)
 -- с естественными приоритетами и ассоциативностью над натуральными числами с 0.
 -- В строке могут быть скобки
+
 parseExpr :: Parser String String AST
 parseExpr = uberExpr lst elemP makeAST where
-  lst      = [(parse '+' <|> parse '-', LeftAssoc), (parse '*' <|> parse '/', LeftAssoc), (parse '^', RightAssoc)]
-  elemP    = (Num <$> parseNum <|> symbol '(' *> parseExpr <* symbol ')')
-  makeAST  = BinOp 
-  parse op = symbol op >>= toOperator
+  lst = [
+      (parse "||", RightAssoc),
+      (parse "&&", RightAssoc),
+      (parse "<=" <|> parse "<" <|> parse ">=" <|> parse ">" <|> parse "==" <|> parse "/=", NoAssoc),
+      (parse "+" <|> parse "-", LeftAssoc),
+      (parse "*" <|> parse "/", LeftAssoc),
+      (parse "^", RightAssoc)
+    ]
+  elemP    = (Num <$> parseNum <|> Ident <$> parseIdent <|> symbol '(' *> parseExpr <* symbol ')')
+  makeAST  = BinOp
+  parse op = matchString op >>= toOperator
 
 -- Парсер для целых чисел
-parseNum :: Parser String String Int
-parseNum = foldl (\acc d -> 10 * acc + digitToInt d) 0 <$> go
+parseNum' :: Parser String String Int
+parseNum' = foldl (\acc d -> 10 * acc + digitToInt d) 0 <$> go
   where
     go :: Parser String String String
     go = some (satisfy isDigit)
 
+parseNum = Parser $ \input ->
+  case input of 
+    ('-':xs) -> case runParser parseNum xs of
+      Success i r -> Success i (r * (-1))
+      e -> e
+    otherwise -> runParser parseNum' input
+
 parseIdent :: Parser String String String
-parseIdent = error "parseIdent undefined"
+parseIdent = ((:) <$> (satisfy isLetter <|> symbol '_')) <*> many (satisfy isLetter <|> satisfy isDigit <|> symbol '_')
 
 -- Парсер для операторов
 parseOp :: Parser String String Operator
-parseOp = elem' >>= toOperator
+parseOp = (parseOp' operators) >>= toOperator
+  where
+    parseOp' []     = matchString "" 
+    parseOp' (s:xs) = (matchString s) <|> (parseOp' xs)
+    operators       = ["+", "-", "*", "/", "^", "==", "/=", "<=", "<", ">=", ">", "&&", "||"]
 
 -- Преобразование символов операторов в операторы
-toOperator :: Char -> Parser String String Operator
-toOperator '+' = success Plus
-toOperator '*' = success Mult
-toOperator '-' = success Minus
-toOperator '/' = success Div
-toOperator '^' = success Pow
-toOperator _   = fail' "Failed toOperator"
+toOperator :: String -> Parser String String Operator
+toOperator "+"  = success Plus
+toOperator "*"  = success Mult
+toOperator "-"  = success Minus
+toOperator "/"  = success Div
+toOperator "^"  = success Pow
+toOperator "==" = success Equal
+toOperator "/=" = success Nequal
+toOperator ">=" = success Ge
+toOperator ">"  = success Gt
+toOperator "<=" = success Le
+toOperator "<"  = success Lt
+toOperator "&&" = success And
+toOperator "||" = success Or
+toOperator _    = fail' "Failed toOperator"
 
 evaluate :: String -> Maybe Int
 evaluate input = do
@@ -75,10 +102,22 @@ evaluate input = do
     Success rest ast | null rest -> return $ compute ast
     _                            -> Nothing
 
+notZero :: Int -> Bool
+notZero 0 = False
+notZero _ = True  
+
 compute :: AST -> Int
-compute (Num x)           = x
-compute (BinOp Plus x y)  = compute x + compute y
-compute (BinOp Mult x y)  = compute x * compute y
-compute (BinOp Minus x y) = compute x - compute y
-compute (BinOp Div x y)   = compute x `div` compute y
-compute (BinOp Pow x y)   = compute x ^ compute y
+compute (Num x)            = x
+compute (BinOp Plus x y)   = compute x + compute y
+compute (BinOp Mult x y)   = compute x * compute y
+compute (BinOp Minus x y)  = compute x - compute y
+compute (BinOp Div x y)    = compute x `div` compute y
+compute (BinOp Pow x y)    = compute x ^ compute y
+compute (BinOp Equal x y)  = fromEnum $ compute x == compute y
+compute (BinOp Nequal x y) = fromEnum $ compute x /= compute y
+compute (BinOp Gt x y)     = fromEnum $ compute x > compute y
+compute (BinOp Ge x y)     = fromEnum $ compute x >= compute y
+compute (BinOp Lt x y)     = fromEnum $ compute x < compute y
+compute (BinOp Le x y)     = fromEnum $ compute x <= compute y
+compute (BinOp And x y)    = fromEnum $ notZero (compute x) && notZero (compute y)
+compute (BinOp Or x y)     = fromEnum $ notZero (compute x) || notZero (compute y)

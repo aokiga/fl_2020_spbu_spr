@@ -54,6 +54,17 @@ sepBy1 sep elem = fmap (:) elem <*> many (sep *> elem)
 symbol :: Char -> Parser String String Char
 symbol c = satisfy (== c)
 
+--matchString :: String -> Parser String String String
+--matchString s = foldr (\x y -> (fmap (\x -> [x])  (symbol x)) <|> y) (success "") s 
+
+matchString :: String -> Parser String String String
+matchString [] = success ""
+matchString (x:xs) = do
+    y  <- symbol x
+    ys <- matchString xs
+    return (y:ys)
+
+-- Проверяет, что первый элемент входной последовательности -- данный символ
 -- Успешно завершается, если последовательность содержит как минимум один элемент
 elem' :: (Show a) => Parser String [a] a
 elem' = satisfy (const True)

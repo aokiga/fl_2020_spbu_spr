@@ -2,7 +2,7 @@ module Test.Expr where
 
 import           AST                 (AST (..), Operator (..))
 import           Combinators         (Parser (..), Result (..), runParser,
-                                      symbol)
+                                      symbol, matchString)
 import           Control.Applicative ((<|>))
 import           Expr                (Associativity (..), evaluate, parseExpr,
                                       parseNum, parseOp, toOperator, uberExpr, parseIdent)
@@ -96,10 +96,10 @@ unit_parseExpr = do
     runParser parseExpr "(1==x+2)||3*4<y-5/6&&(7/=z^8)||(id>12)&&abc<=13||xyz>=42" @?=
       runParser parseExpr "(1==(x+2))||(((3*4)<(y-(5/6))&&(7/=(z^8)))||(((id>12)&&(abc<=13))||(xyz>=42)))"
 
-mult  = symbol '*' >>= toOperator
-sum'  = symbol '+' >>= toOperator
-minus = symbol '-' >>= toOperator
-div'  = symbol '/' >>= toOperator
+mult  = matchString "*" >>= toOperator
+sum'  = matchString "+" >>= toOperator
+minus = matchString "-" >>= toOperator
+div'  = matchString "/" >>= toOperator
 
 expr1 :: Parser String String AST
 expr1 =
