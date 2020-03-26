@@ -1,0 +1,95 @@
+\documentclass[12pt]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm,bindingoffset=0cm]{geometry}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,russian]{babel}
+\usepackage{cmap}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{pifont}
+\usepackage{tikz}
+\usepackage{verbatim}
+
+\usetikzlibrary{shapes,arrows}
+\usetikzlibrary{positioning,automata}
+\tikzset{every state/.style={minimum size=0.2cm},
+initial text={}
+}
+
+
+\newenvironment{myauto}[1][3]
+{
+  \begin{center}
+    \begin{tikzpicture}[> = stealth,node distance=#1cm, on grid, very thick]
+}
+{
+    \end{tikzpicture}
+  \end{center}
+}
+
+
+\begin{document}
+\begin{center} {\LARGE Формальные языки} \end{center}
+
+\begin{center} \Large домашнее задание до 23:59 26.03 \end{center}
+\bigskip
+
+\begin{enumerate}
+  \item [\bf \textnumero 2] Приведите грамматику в нормальную форму Хомского: \\
+  $S\ \to\ RS\ |\ R\\
+   R\ \to aSb\ |\ cRd\ |\ ab\ |\ cd\ |\ \varepsilon$\\
+   Терминалы: $a,\ b,\ c,\ d$, нетерминалы: $R,\ S$, стартовый нетерминал: $S$, пустая строка: $\varepsilon$.\\
+   {\bf Решение}\\
+   Поменяем старт. Получим:\\
+   $S \to S'\\
+   S' \to RS'\ |\ R\\
+   R \to aS'b\ |\ cRd\ |\ ab\ |\ cd\ |\ \varepsilon$
+   
+   Устраним длинные правила. Получим:\\
+   $S \to S'\\
+   S' \to RS'\ |\ R\\
+   R \to EB\ |\ FD\ |\ AB\ |\ CD\ |\ \varepsilon\\
+   A \to a\\
+   B \to b\\
+   C \to c\\
+   D \to d\\
+   E \to AS'\\
+   F \to CR$
+   
+   Устраним $\varepsilon$-правила. Получим:\\
+   $S \to S'\ | \varepsilon\\
+   S' \to RS'\ |\ R\\
+   R \to EB\ |\ FD\ |\ AB\ |\ CD\\\
+   A \to a\\
+   B \to b\\
+   C \to c\\
+   D \to d\\
+   E \to AS'\ |\ A \\
+   F \to CR\ |\ C$
+   
+   Устраним цепные правила. Получим:\\
+   $S \to RS'\ |\ EB\ |\ FD\ |\ AB\ |\ CD\ | \varepsilon\\
+   S' \to RS'\ |\ EB\ |\ FD\ |\ AB\ |\ CD\\
+   R \to EB\ |\ FD\ |\ AB\ |\ CD\\\
+   A \to a\\
+   B \to b\\
+   C \to c\\
+   D \to d\\
+   E \to AS'\ |\ a \\
+   F \to CR\ |\ c$\\
+   Эта грамматика в нормальной форме Хомского.
+  \item [\bf \textnumero 3] Является ли следующий язык контекстно-свободным? Если является, привести КС грамматику, иначе -- доказать. \\
+  $L = \{\ a^m\ b^n\ |\ m\ +\ n\ >\ 0,\ (m\ +\ n)\ \vdots\ 2\ \}$ \\
+  {\bf Решение}\\
+  Сделаем такую КС грамматику: $S \to aa\ |\ bb\ |\ ab\ |\ aaS\ |\ aSb\ |\ Sbb$.\\ Пусть она задает язык L'.\\
+  Нетрудно понять, что все слова в L' будут непустые и четной длины.\\
+  Докажем, что L = L'.\\
+  Сначала, включение в одну сторону: L $\subset$ L'. \\
+  Нетрудно понять, что все слова из букв a и все слова из букв b, которые лежат в L, также лежат и в L' (по индукции).\\
+  Рассмотрим слово w = $a^kb^m$, w $\in$ L. Пусть k $\le$ m.\\
+  Удалим из слова $\lfloor\frac{k}{2}\rfloor$ строк "аa" сначала. Если k нечетное, то после этого удалим букву "a"  с начала и букву "b" с конца. Получим слово w', состоящее только из букв b. Оно лежит в L и L' (так как состоит только из букв b).\\
+  Мы можем по правилам получить слово w из слова w'. Значит, w $\in$ L'.\\
+  Если k > m то сделаем аналогично, только вместо одного правила будем юзать другое и получим слово, состоящее только из букв "a". 
+  Включение в другую сторону - очевидно. Все слова из L' подходят в качестве слов из L. Так как они четной длины, непустые и имеют вид $a^kb^m$.
+\end{enumerate}
+\end{document}
