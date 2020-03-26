@@ -55,18 +55,11 @@ parseExpr = uberExpr lst elemP makeAST where
   parse op = matchString op >>= toOperator
 
 -- Парсер для целых чисел
-parseNum' :: Parser String String Int
-parseNum' = foldl (\acc d -> 10 * acc + digitToInt d) 0 <$> go
+parseNum = foldl f 0 <$> go
   where
-    go :: Parser String String String
-    go = some (satisfy isDigit)
-
-parseNum = Parser $ \input ->
-  case input of 
-    ('-':xs) -> case runParser parseNum xs of
-      Success i r -> Success i (r * (-1))
-      e -> e
-    otherwise -> runParser parseNum' input
+    go = some (satisfy isDigit) <|> (\x y -> y ++ x) <$> many (symbol '-') <*> some (satisfy isDigit)
+    f acc '-' = -acc
+    f acc d   = 10 * acc + digitToInt d
 
 parseIdent :: Parser String String String
 parseIdent = ((:) <$> (satisfy isLetter <|> symbol '_')) <*> many (satisfy isLetter <|> satisfy isDigit <|> symbol '_')
