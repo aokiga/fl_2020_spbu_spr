@@ -40,7 +40,7 @@ parseCondition = do
     matchString "("
     parseSpaces
     expr <- parseExpr
-    parseSpace
+    parseSpaces
     matchString ")"
     return expr
 
@@ -48,19 +48,20 @@ parseIf :: Parser String String LAst
 parseIf = do
     matchString "if"
     condition <- parseCondition
-    parseSpace
+    parseSpaces
     block1 <- parseSeq
-    parseSpace
+    parseSpaces
     matchString "else"
-    parseSpace
+    parseSpaces
     block2 <- parseSeq
     return $ If condition block1 block2
 
 parseWhile :: Parser String String LAst
 parseWhile = do
     matchString "while"
+    parseSpaces
     condition <- parseCondition
-    parseSpace
+    parseSpaces
     block <- parseSeq
     return $ While condition block
 
@@ -68,8 +69,10 @@ parseAssign :: Parser String String LAst
 parseAssign = do
     matchString "va"
     parseSpace
+    parseSpaces
     name <- parseIdent
     parseSpace
+    parseSpaces
     expr <- parseCondition
     return $ Assign name expr
 
@@ -77,20 +80,23 @@ parseRead :: Parser String String LAst
 parseRead = do
     matchString "ead"
     parseSpace
+    parseSpaces
     name <- parseIdent
     return $ Read name
 
 parseWrite :: Parser String String LAst
 parseWrite = do
     matchString "pint"
+    parseSpace
+    parseSpaces
     expr <- parseCondition
     return $ Write expr
 
 parseSeq :: Parser String String LAst
 parseSeq = do
     matchString "{"
-    parseSpace
-    commands <- many $ parseCommand  <* parseSpace <* matchString ";" <* parseSpace
+    parseSpaces
+    commands <- many $ parseCommand  <* parseSpaces <* matchString ";" <* parseSpaces
     matchString "}"
     return $ Seq commands
 
