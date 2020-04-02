@@ -5,7 +5,7 @@ import           Combinators         (Parser (..), Result (..), runParser,
                                       symbol, matchString)
 import           Control.Applicative ((<|>))
 import           Expr                (Associativity (..), evaluate, parseExpr,
-                                      parseNum, parseOp, toOperator, uberExpr, parseIdent, OpType (..))
+                                      parseNum, parseNegNum, parseOp, toOperator, uberExpr, parseIdent, OpType (..))
 import           Test.Tasty.HUnit    (Assertion, (@?=), assertBool)
 
 isFailure (Failure _) = True
@@ -40,12 +40,12 @@ unit_parseNum = do
 
 unit_parseNegNum :: Assertion
 unit_parseNegNum = do
-    runParser parseNum "123" @?= Success "" 123
-    runParser parseNum "-123" @?= Success "" (-123)
-    runParser parseNum "--123" @?= Success "" 123
-    assertBool "" $ isFailure $ runParser parseNum "+-3"
-    assertBool "" $ isFailure $ runParser parseNum "-+3"
-    assertBool "" $ isFailure $ runParser parseNum "-a"
+    runParser parseNegNum "123" @?= Success "" 123
+    runParser parseNegNum "-123" @?= Success "" (-123)
+    runParser parseNegNum "--123" @?= Success "" 123
+    assertBool "" $ isFailure $ runParser parseNegNum "+-3"
+    assertBool "" $ isFailure $ runParser parseNegNum "-+3"
+    assertBool "" $ isFailure $ runParser parseNegNum "-a"
 
 unit_parseIdent :: Assertion
 unit_parseIdent = do

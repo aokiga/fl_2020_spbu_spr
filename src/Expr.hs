@@ -20,24 +20,27 @@ uberExpr :: Monoid e
          -> (op -> ast -> ast -> ast) -- конструктор узла дерева для бинарной операции
          -> (op -> ast -> ast)        -- конструктор узла для унарной операции
          -> Parser e i ast
-uberExpr [] elemP _                      = elemP 
-uberExpr ((p, assoc):rest) elemP makeAST = case assoc of
-  LeftAssoc -> do
+uberExpr [] elemP _ _ = elemP 
+uberExpr ((p, assoc):rest) elemP makeAST makeUAST = case assoc of
+  Binary LeftAssoc  -> do
       (first, rest) <- fmap (,) uberExpr' <*> (many $ fmap (,) p <*> uberExpr')
-      return (foldl f first rest) where
-        f l (op, r) = makeAST op l r
-  RightAssoc -> do
+      return (foldl f first rest)
+    <|> uberExpr'
+        where f l (op, r) = makeAST op l r
+  Binary RightAssoc -> do
       (rest, last) <- fmap (,) (many $ fmap (,) uberExpr' <*> p) <*> uberExpr'
-      return (foldr f last rest) where
-        f (l, op) r = makeAST op l r
-  NoAssoc -> do
+      return (foldr f last rest)
+    <|> uberExpr'
+        where f (l, op) r = makeAST op l r
+  Binary NoAssoc    -> do
       l  <- uberExpr'
       op <- p
       r  <- uberExpr'
       return (makeAST op l r)
     <|> uberExpr'
+  Unary             -> fmap makeUAST p <*> uberExpr' <|> uberExpr'
   where
-    uberExpr' = uberExpr rest elemP makeAST
+    uberExpr' = uberExpr rest elemP makeAST makeUAST
 
 
 -- Парсер для выражений над +, -, *, /, ^ (возведение в степень)
@@ -45,21 +48,29 @@ uberExpr ((p, assoc):rest) elemP makeAST = case assoc of
 -- В строке могут быть скобки
 
 parseExpr :: Parser String String AST
-parseExpr = uberExpr lst elemP makeAST where
+parseExpr = uberExpr lst elemP makeAST makeUAST where
   lst = [
-      (parse "||", RightAssoc),
-      (parse "&&", RightAssoc),
-      (parse "<=" <|> parse "<" <|> parse ">=" <|> parse ">" <|> parse "==" <|> parse "/=", NoAssoc),
-      (parse "+" <|> parse "-", LeftAssoc),
-      (parse "*" <|> parse "/", LeftAssoc),
-      (parse "^", RightAssoc)
+      (parse "||", Binary RightAssoc),
+      (parse "&&", Binary RightAssoc),
+      (parse "!", Unary),
+      (parse "<=" <|> parse "<" <|> parse ">=" <|> parse ">" <|> parse "==" <|> parse "/=", Binary NoAssoc),
+      (parse "+" <|> parse "-", Binary LeftAssoc),
+      (parse "*" <|> parse "/", Binary LeftAssoc),
+      (parse "-", Unary),
+      (parse "^", Binary RightAssoc)
     ]
   elemP    = (Num <$> parseNum <|> Ident <$> parseIdent <|> symbol '(' *> parseExpr <* symbol ')')
   makeAST  = BinOp
+  makeUAST = UnaryOp
   parse op = matchString op >>= toOperator
 
 -- Парсер для целых чисел
 parseNum = foldl f 0 <$> go
+  where
+    go = some (satisfy isDigit)
+    f acc d   = 10 * acc + digitToInt d
+
+parseNegNum = foldl f 0 <$> go
   where
     go = some (satisfy isDigit) <|> (\x y -> y ++ x) <$> many (symbol '-') <*> some (satisfy isDigit)
     f acc '-' = -acc
@@ -74,7 +85,7 @@ parseOp = (parseOp' operators) >>= toOperator
   where
     parseOp' []     = matchString "" 
     parseOp' (s:xs) = (matchString s) <|> (parseOp' xs)
-    operators       = ["+", "-", "*", "/", "^", "==", "/=", "<=", "<", ">=", ">", "&&", "||"]
+    operators       = ["+", "-", "*", "/", "^", "==", "/=", "<=", "<", ">=", ">", "&&", "||", "!"]
 
 -- Преобразование символов операторов в операторы
 toOperator :: String -> Parser String String Operator
@@ -90,6 +101,7 @@ toOperator ">"  = success Gt
 toOperator "<=" = success Le
 toOperator "<"  = success Lt
 toOperator "&&" = success And
+toOperator "!"  = success Not
 toOperator "||" = success Or
 toOperator _    = fail' "Failed toOperator"
 
@@ -108,6 +120,7 @@ compute (Num x)            = x
 compute (BinOp Plus x y)   = compute x + compute y
 compute (BinOp Mult x y)   = compute x * compute y
 compute (BinOp Minus x y)  = compute x - compute y
+compute (UnaryOp Minus x)  = -(compute x)
 compute (BinOp Div x y)    = compute x `div` compute y
 compute (BinOp Pow x y)    = compute x ^ compute y
 compute (BinOp Equal x y)  = fromEnum $ compute x == compute y
@@ -118,3 +131,4 @@ compute (BinOp Lt x y)     = fromEnum $ compute x < compute y
 compute (BinOp Le x y)     = fromEnum $ compute x <= compute y
 compute (BinOp And x y)    = fromEnum $ notZero (compute x) && notZero (compute y)
 compute (BinOp Or x y)     = fromEnum $ notZero (compute x) || notZero (compute y)
+compute (UnaryOp Not x)    = fromEnum $ not $ notZero $ compute x 
