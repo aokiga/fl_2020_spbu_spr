@@ -1,7 +1,7 @@
 module LLang where
 
 import AST (AST (..), Operator (..))
-import Combinators (Result (..), Parser (..), symbol, matchString)
+import Combinators (Result (..), Parser (..), symbol, matchString, success)
 import Expr (parseExpr, parseIdent)
 import Control.Applicative
 import Data.List (elemIndex)
@@ -37,28 +37,29 @@ stmt =
 parseCondition :: Parser String String AST
 parseCondition = do
     parseSpaces
-    matchString "("
+    parseString "("
     parseSpaces
     expr <- parseExpr
     parseSpaces
-    matchString ")"
+    parseString ")"
     return expr
 
 parseIf :: Parser String String LAst
 parseIf = do
-    matchString "if"
+    parseString "if"
+    parseSpaces
     condition <- parseCondition
     parseSpaces
     block1 <- parseSeq
     parseSpaces
-    matchString "else"
+    parseString "else"
     parseSpaces
     block2 <- parseSeq
     return $ If condition block1 block2
 
 parseWhile :: Parser String String LAst
 parseWhile = do
-    matchString "while"
+    parseString "while"
     parseSpaces
     condition <- parseCondition
     parseSpaces
@@ -67,7 +68,7 @@ parseWhile = do
 
 parseAssign :: Parser String String LAst
 parseAssign = do
-    matchString "va"
+    parseString "va"
     parseSpace
     parseSpaces
     name <- parseIdent
@@ -78,7 +79,7 @@ parseAssign = do
 
 parseRead :: Parser String String LAst
 parseRead = do
-    matchString "ead"
+    parseString "ead"
     parseSpace
     parseSpaces
     name <- parseIdent
@@ -86,7 +87,7 @@ parseRead = do
 
 parseWrite :: Parser String String LAst
 parseWrite = do
-    matchString "pint"
+    parseString "pint"
     parseSpace
     parseSpaces
     expr <- parseCondition
@@ -94,14 +95,14 @@ parseWrite = do
 
 parseSeq :: Parser String String LAst
 parseSeq = do
-    matchString "{"
+    parseString "{"
     parseSpaces
-    commands <- many $ parseCommand  <* parseSpaces <* matchString ";" <* parseSpaces
-    matchString "}"
+    commands <- many $ parseCommand <* parseSpaces <* parseString ";" <* parseSpaces
+    parseString "}"
     return $ Seq commands
 
 parseCommand :: Parser String String LAst
-parseCommand = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseRead <|> parseSeq
+parseCommand = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
 
 invSymbols :: String
 invSymbols = " \t\n\v\f\r"
@@ -119,10 +120,13 @@ parseL = Parser $ \input -> runParser parseL' (modifyInput input) where
     parseSpaces
     result <- parseSeq
     parseSpaces
-    return result 
+    return result
+
+parseString :: String -> Parser String String String
+parseString = matchString
 
 parseSpace :: Parser String String String
-parseSpace = matchString " "
+parseSpace = parseString " "
 
 parseSpaces :: Parser String String String
 parseSpaces = many $ symbol ' '
