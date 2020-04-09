@@ -1,8 +1,7 @@
 module Expr where
 
 import           AST         (AST (..), Operator (..), Subst (..))
-import           Combinators (Parser (..), Result (..), bind', elem', fail',
-                              fmap', satisfy, some', success, symbol, matchString)
+import           Combinators (Parser (..), Result (..), satisfy, success, symbol, matchString, fail')
 import           Data.Char   (digitToInt, isDigit, isLetter)
 
 import qualified Data.Map as Map
@@ -17,7 +16,16 @@ data OpType = Binary Associativity
             | Unary
 
 evalExpr :: Subst -> AST -> Maybe Int
-evalExpr = error "evalExpr undefined"
+evalExpr _ (Num x)        = Just x
+evalExpr s (Ident x)      = Map.lookup x s
+evalExpr s (UnaryOp op x) = do
+                              x' <- evalExpr s x
+                              return $ compute $ UnaryOp op (Num x')
+evalExpr s (BinOp op l r) = do
+                              l' <- evalExpr s l
+                              r' <- evalExpr s r
+                              return $ compute $ BinOp op (Num l') (Num r')
+
 
 uberExpr :: Monoid e
          => [(Parser e i op, OpType)] -- список операций с их арностью и, в случае бинарных, ассоциативностью
