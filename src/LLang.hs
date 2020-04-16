@@ -18,7 +18,13 @@ data Configuration = Conf { subst :: Subst, input :: [Int], output :: [Int] }
 
 data Program = Program { functions :: [Function], main :: LAst }
 
+instance Eq Program where
+  a == b = (show a) == (show b)
+
 data Function = Function { name :: String, args :: [Var], funBody :: LAst }
+
+instance Eq Function where
+  a == b = (show a) == (show b)
 
 data LAst
   = If { cond :: Expr, thn :: LAst, els :: LAst }
@@ -97,14 +103,42 @@ parseSeq = do
     parseString "}"
     return $ Seq commands
 
+parseReturn :: Parser String String LAst
+parseReturn = do
+    parseString "etun"
+    parseSpace
+    parseSpaces
+    expr <- parseCondition
+    return $ Return expr
+
 parseCommand :: Parser String String LAst
-parseCommand = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
+parseCommand = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseReturn <|> parseSeq
+
+parseArgs :: Parser String String [Var]
+parseArgs = ((:) <$> (parseIdent) <*> many(parseSpaces *> parseString "," *> parseSpaces *> parseIdent)) <|> (pure [])
 
 parseDef :: Parser String String Function
-parseDef = error "parseDef undefined"
+parseDef = do
+    parseString "fun"
+    parseSpace
+    parseSpaces
+    name <- parseIdent
+    parseSpaces
+    parseString "("
+    parseSpaces
+    args <- parseArgs
+    parseSpaces
+    parseString ")"
+    parseSpaces
+    body <- parseSeq
+    return $ Function name args body
 
 parseProg :: Parser String String Program
-parseProg = error "parseProg undefined"
+parseProg = Parser $ \input -> runParser' parseProg' (fmap modifyInput input) where
+  parseProg' = do
+    funcs <- (many $ parseSpaces *> parseDef)
+    main <- parseL
+    return $ Program funcs main
 
 initialConf :: [Int] -> Configuration
 initialConf input = Conf Map.empty input []
@@ -187,8 +221,7 @@ ident = (+1)
 identation n = if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id
 
 parseL :: Parser String String LAst
-parseL = Parser $ \input -> runParser' parseL' (fmap modifyInput input) where
-  parseL' = do
+parseL = do
     parseSpaces
     result <- parseSeq
     parseSpaces
