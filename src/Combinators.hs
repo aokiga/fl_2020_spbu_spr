@@ -19,6 +19,9 @@ newtype Parser error input result
 data InputStream a = InputStream { stream :: a, curPos :: Position }
                    deriving (Show, Eq)
 
+instance Functor (InputStream) where
+  fmap f (InputStream str curPos) = InputStream (f str) curPos
+
 data ErrorMsg e = ErrorMsg { errors :: [e], pos :: Position }
                 deriving (Eq)
 
@@ -54,9 +57,9 @@ instance Applicative (Parser error input) where
 
 instance Monad (Parser error input) where
   return = pure
-  (>>=) (Parser p) k = Parser runParser' where
-    runParser' input = case p input of
-      Success input' result -> runParser (k result) input'
+  (>>=) (Parser p) k = Parser runParser'' where
+    runParser'' input = case p input of
+      Success input' result -> runParser' (k result) input'
       Failure error         -> Failure error
 
 instance Monoid error => Alternative (Parser error input) where

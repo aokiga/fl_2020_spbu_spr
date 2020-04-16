@@ -1,6 +1,5 @@
 module Expr where
 
-<<<<<<< HEAD
 import           AST                 (AST (..), Operator (..), Subst (..))
 import           Combinators         (Parser (..), Result (..), fail',
                                       runParser, satisfy, stream, success, symbol, matchString)

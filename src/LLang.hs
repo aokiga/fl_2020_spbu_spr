@@ -1,7 +1,7 @@
 module LLang where
 
 import AST (AST (..), Operator (..), Subst (..))
-import Combinators (Result (..), Parser (..), symbol, matchString, success)
+import Combinators (Result (..), Parser (..), symbol, matchString, success, runParser)
 import Expr (parseExpr, parseIdent, evalExpr)
 import Control.Applicative
 import Data.List (elemIndex, intercalate)
@@ -100,21 +100,10 @@ parseSeq = do
 parseCommand :: Parser String String LAst
 parseCommand = parseIf <|> parseWhile <|> parseAssign <|> parseRead <|> parseWrite <|> parseSeq
 
-invSymbols :: String
-invSymbols = " \t\n\v\f\r"
-
-modifyInput :: String -> String
-modifyInput "" = ""
-modifyInput (c : rest)
-  | (c == 'R' || c == 'r')            = modifyInput rest                   
-  | elemIndex c invSymbols == Nothing = (c : modifyInput rest)   
-  | otherwise                         = (' ' : modifyInput rest)
-      
-
 parseDef :: Parser String String Function
 parseDef = error "parseDef undefined"
 
-parseProg :: Parser String String Prog
+parseProg :: Parser String String Program
 parseProg = error "parseProg undefined"
 
 initialConf :: [Int] -> Configuration
@@ -183,14 +172,22 @@ instance Show LAst where
       flatShowExpr (Num n) = show n
       flatShowExpr (FunctionCall name args) = printf "%s(%s)" name (intercalate ", " $ map flatShowExpr args)
 
+invSymbols :: String
+invSymbols = " \t\n\v\f\r"
+
+modifyInput :: String -> String
+modifyInput "" = ""
+modifyInput (c : rest)
+  | (c == 'R' || c == 'r')            = modifyInput rest                   
+  | elemIndex c invSymbols == Nothing = (c : modifyInput rest)   
+  | otherwise                         = (' ' : modifyInput rest)
 
 ident = (+1)
 
 identation n = if n > 0 then printf "%s|_%s" (concat $ replicate (n - 1) "| ") else id
 
-
 parseL :: Parser String String LAst
-parseL = Parser $ \input -> runParser parseL' (modifyInput input) where
+parseL = Parser $ \input -> runParser' parseL' (fmap modifyInput input) where
   parseL' = do
     parseSpaces
     result <- parseSeq

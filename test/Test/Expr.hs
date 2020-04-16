@@ -43,7 +43,6 @@ unit_parseNum = do
 
 unit_parseNegNum :: Assertion
 unit_parseNegNum = do
-<<<<<<< HEAD
     runParser parseNegNum "123" @?= Success (toStream "" 3) (123)
     runParser parseNegNum "-123" @?= Success (toStream "" 4) (-123)
     runParser parseNegNum "--123" @?= Success (toStream "" 5) (123)
