@@ -43,6 +43,7 @@ unit_parseNum = do
 
 unit_parseNegNum :: Assertion
 unit_parseNegNum = do
+<<<<<<< HEAD
     runParser parseNegNum "123" @?= Success (toStream "" 3) (123)
     runParser parseNegNum "-123" @?= Success (toStream "" 4) (-123)
     runParser parseNegNum "--123" @?= Success (toStream "" 5) (123)
@@ -113,7 +114,6 @@ unit_parseExpr = do
 
     testFailure $ runParser parseExpr "--1"
     testFailure $ runParser parseExpr "-!1"
-
 
 mult  = word "*" *> return Mult
 sum'  = word "+" *> return Plus

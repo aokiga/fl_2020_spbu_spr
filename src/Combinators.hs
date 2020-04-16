@@ -4,6 +4,7 @@ module Combinators where
 
 import           Control.Applicative
 import           Data.List           (nub, sortBy)
+import           Control.Applicative
 
 data Result error input result
   = Success (InputStream input) result
@@ -34,17 +35,29 @@ toStream = InputStream
 incrPos :: InputStream a -> InputStream a
 incrPos (InputStream str pos) = InputStream str (pos + 1)
 
+instance Functor (Result error input) where
+  fmap f (Success input result) = Success input (f result)
+  fmap f (Failure error)        = Failure error
+
 instance Functor (Parser error input) where
-  fmap = error "fmap not implemented"
+  fmap f (Parser p) = Parser runParser' where
+    runParser' input = fmap f (p input)
 
 instance Applicative (Parser error input) where
-  pure = error "pure not implemented"
-  (<*>) = error "<*> not implemented"
+  pure result = Parser runParser' where
+    runParser' input = Success input result
+
+  (<*>) (Parser p1) (Parser p2) = Parser runParser' where 
+    runParser' input = case p1 input of
+      Success input' result -> fmap result (p2 input')
+      Failure error         -> Failure error
 
 instance Monad (Parser error input) where
-  return = error "return not implemented"
-
-  (>>=) = error ">>= not implemented"
+  return = pure
+  (>>=) (Parser p) k = Parser runParser' where
+    runParser' input = case p input of
+      Success input' result -> runParser (k result) input'
+      Failure error         -> Failure error
 
 instance Monoid error => Alternative (Parser error input) where
   empty = Parser $ \input -> Failure [makeError mempty (curPos input)]
@@ -76,12 +89,34 @@ infixl 1 <?>
       Failure err -> Failure $ mergeErrors [makeError msg (maximum $ map pos err)] err
       x -> x
 
+-- Принимает последовательность элементов, разделенных разделителем
+-- Первый аргумент -- парсер для разделителя
+-- Второй аргумент -- парсер для элемента
+-- В последовательности должен быть хотя бы один элемент
+sepBy1 :: Monoid e => Parser e i sep -> Parser e i a -> Parser e i [a]
+sepBy1 sep elem = fmap (:) elem <*> many (sep *> elem)
+
 -- Проверяет, что первый элемент входной последовательности -- данный символ
 symbol :: Char -> Parser String String Char
 symbol c = ("Expected symbol: " ++ show c) <?> satisfy (== c)
 
 eof :: Parser String String ()
 eof = Parser $ \input -> if null $ stream input then Success input () else Failure [makeError "Not eof" (curPos input)]
+
+--matchString :: String -> Parser String String String
+--matchString s = foldr (\x y -> (fmap (\x -> [x])  (symbol x)) <|> y) (success "") s 
+
+matchString :: String -> Parser String String String
+matchString [] = success ""
+matchString (x:xs) = do
+    y  <- symbol x
+    ys <- matchString xs
+    return (y:ys)
+
+-- Проверяет, что первый элемент входной последовательности -- данный символ
+-- Успешно завершается, если последовательность содержит как минимум один элемент
+elem' :: (Show a) => Parser String [a] a
+elem' = satisfy (const True)
 
 -- Проверяет, что первый элемент входной последовательности удовлетворяет предикату
 satisfy :: (a -> Bool) -> Parser String [a] a
