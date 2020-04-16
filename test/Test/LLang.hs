@@ -212,7 +212,7 @@ prog =
         ]
     )
 
-code = "fun f(x, y) { read z; return (x+y); }\nfun g(x) { if (x) { return (x); } else { return (13*x); } } { read x; read y; print (f(x, y)); print(g(x)); }"
+code = "fun f(x, y) { read z; return (x+y); } fun g(x) { if (x) { return (x); } else { return (x*13); }; } { read x; read y; print (f(x,y)); print (g(x)); }"
 
 prog0 = 
   Program
@@ -224,10 +224,9 @@ prog1 =
         [Function "f" ["a", "b", "c"] (Seq [Read "a", Write (Ident "b")])]
         (Seq [Read "x", Write (Ident "x")])
 
-
-
 unit_parseProg :: Assertion
 unit_parseProg = do
     runParser parseProg "fun f() { print (12); } { }" @?= Success (toStream "" 26) prog0
     runParser parseProg "fun f(a, b, c) { read a; print (b);  }   { read x; print (x); }   " @?= Success (toStream "" 62) prog1
-    runParser parseProg code @?= Success (toStream "" 26) prog
+    runParser parseProg code @?= Success (toStream "" 137) prog
+

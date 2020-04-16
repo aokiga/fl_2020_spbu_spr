@@ -74,7 +74,6 @@ parseAssign = do
     parseSpace
     parseSpaces
     name <- parseIdent
-    parseSpace
     parseSpaces
     expr <- parseCondition
     return $ Assign name expr
@@ -90,7 +89,6 @@ parseRead = do
 parseWrite :: Parser String String LAst
 parseWrite = do
     parseString "pint"
-    parseSpace
     parseSpaces
     expr <- parseCondition
     return $ Write expr
@@ -106,7 +104,6 @@ parseSeq = do
 parseReturn :: Parser String String LAst
 parseReturn = do
     parseString "etun"
-    parseSpace
     parseSpaces
     expr <- parseCondition
     return $ Return expr

@@ -73,7 +73,7 @@ parseExpr = uberExpr lst elemP makeAST makeUAST where
       (parse "-", Unary),
       (parse "^", Binary RightAssoc)
     ]
-  elemP    = (Num <$> parseNum <|> Ident <$> parseIdent <|> symbol '(' *> parseExpr <* symbol ')')
+  elemP    = (Num <$> parseNum <|> parseFunctionCall <|> Ident <$> parseIdent <|> symbol '(' *> parseExpr <* symbol ')')
   makeAST  = BinOp
   makeUAST = UnaryOp
   parse op = matchString op >>= toOperator
@@ -100,6 +100,14 @@ parseOp = (parseOp' operators) >>= toOperator
     parseOp' []     = matchString "" 
     parseOp' (s:xs) = (matchString s) <|> (parseOp' xs)
     operators       = ["+", "-", "*", "/", "^", "==", "/=", "<=", "<", ">=", ">", "&&", "||", "!"]
+
+parseFunctionCall :: Parser String String AST
+parseFunctionCall = do
+    name <- parseIdent
+    matchString "("
+    args <- ((:) <$> (parseExpr) <*> many(matchString "," *> parseExpr)) <|> (pure [])
+    matchString ")"
+    return $ FunctionCall name args
 
 -- Преобразование символов операторов в операторы
 toOperator :: String -> Parser String String Operator
