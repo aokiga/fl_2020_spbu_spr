@@ -1,7 +1,7 @@
 module Test.LLang where
 
 import           AST
-import           Combinators      (Parser (..), Result (..), runParser, toStream, symbol)
+import           Combinators      (Parser (..), Result (..), runParser, toStream, symbol, Position(..))
 import qualified Data.Map         as Map
 import           Debug.Trace      (trace)
 import           LLang            (LAst (..), parseL, parseProg, parseDef,
@@ -166,10 +166,10 @@ isFailure  _          = False
 
 unit_parseL :: Assertion
 unit_parseL = do
-    runParser parseL "   { ead x; pint (x); }   " @?= Success (toStream "" 26) (Seq [Read "x", Write (Ident "x")])
+    runParser parseL "   { ead x; pint (x); }   " @?= Success (toStream "" (Position 0 26)) (Seq [Read "x", Write (Ident "x")])
 
     --factorial
-    runParser parseL "{ ead x; va ans (1); va i (x); while (i>0) { va i (i-1); va ans (ans*i); }; pint (ans); }" @?= Success (toStream "" 89) (
+    runParser parseL "{ ead x; va ans (1); va i (x); while (i>0) { va i (i-1); va ans (ans*i); }; pint (ans); }" @?= Success (toStream "" (Position 0 89)) (
         Seq [
             Read "x",
             Assign "ans" (Num 1),
@@ -186,7 +186,7 @@ unit_parseL = do
     assertBool "" $ isFailure (runParser parseL "{ f (12); }")
 
 unit_parseDef = do
-  runParser parseDef "fun fact(x) { va ans (1); va i (x); while (i>0) { va i (i-1); va ans (ans*i); }; } etun (ans)" @?= Success (toStream "" 93) (
+  runParser parseDef "fun fact(x) { va ans (1); va i (x); while (i>0) { va i (i-1); va ans (ans*i); }; } etun (ans)" @?= Success (toStream "" (Position 0 93)) (
     Function "fact" ["x"] (
         Seq [
             Assign "ans" (Num 1),
@@ -200,7 +200,7 @@ unit_parseDef = do
     (Ident "ans"))
 
 
-  runParser parseDef "fun f(x, y) { ead z; } etun(x+y)" @?= Success (toStream "" 32) funcF
+  runParser parseDef "fun f(x, y) { ead z; } etun(x+y)" @?= Success (toStream "" (Position 0 32)) funcF
 
 -- f x y = read z ; return (x + z * y)
 -- g x = if (x) then return x else return x*13
@@ -233,6 +233,8 @@ prog1 =
 
 unit_parseProg :: Assertion
 unit_parseProg = do
-    runParser parseProg "fun f() { print (12); } return(0) { }" @?= Success (toStream "" 34) prog0
-    runParser parseProg "fun f(a, b, c) { read a; print (b);  } return (0)  { read x; print (x); }   " @?= Success (toStream "" 70) prog1
-    runParser parseProg code @?= Success (toStream "" 66) prog
+    runParser parseProg "fun f() { print (12); } return(0) { }" @?= Success (toStream "" (Position 0 34)) prog0
+    runParser parseProg "fun f(a, b, c) { read a; print (b);  } return (0)  { read x; print (x); }   " @?= Success (toStream "" (Position 0 70)) prog1
+    runParser parseProg code @?= Success (toStream "" (Position 0 66)) prog
+    runParser parseProg "fun f() { print (12); }\n return\t (0)\n \n{ }" @?= Success (toStream "" (Position 3 3)) prog0
+    

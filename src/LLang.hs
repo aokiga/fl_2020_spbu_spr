@@ -233,15 +233,11 @@ instance Show LAst where
       flatShowExpr (Num n) = show n
       flatShowExpr (FunctionCall name args) = printf "%s(%s)" name (intercalate ", " $ map flatShowExpr args)
 
-invSymbols :: String
-invSymbols = " \t\n\v\f\r"
-
 modifyInput :: String -> String
 modifyInput "" = ""
 modifyInput (c : rest)
-  | (c == 'R' || c == 'r')            = modifyInput rest                   
-  | elemIndex c invSymbols == Nothing = (c : modifyInput rest)   
-  | otherwise                         = (' ' : modifyInput rest)
+  | (c == 'R' || c == 'r')            = modifyInput rest         
+  | otherwise                         = (c : modifyInput rest)
 
 ident = (+1)
 
@@ -258,7 +254,7 @@ parseString :: String -> Parser String String String
 parseString = matchString
 
 parseSpace :: Parser String String String
-parseSpace = parseString " "
+parseSpace = (parseString " ") <|> (parseString "\n") <|> parseString ("\t")
 
 parseSpaces :: Parser String String String
-parseSpaces = many $ symbol ' '
+parseSpaces = many $ (symbol ' ') <|> (symbol '\n') <|> symbol ('\t') 
