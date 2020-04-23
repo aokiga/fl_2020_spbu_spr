@@ -114,7 +114,6 @@ unit_parseExpr = do
     testFailure $ runParser parseExpr "--1"
     testFailure $ runParser parseExpr "-!1"
 
-
 mult  = word "*" *> return Mult
 sum'  = word "+" *> return Plus
 minus = word "-" *> return Minus
