@@ -1,0 +1,6 @@
+eval(St, conj(X, Y), U) :- eval(St, X, V), eval(St, Y, W), and(V, W, U).
+
+elem(zero, cons(H, T), H).
+ 
+ ?- eval(St, true, not(mem(Z))).
+

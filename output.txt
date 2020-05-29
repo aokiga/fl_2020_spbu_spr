@@ -1,0 +1,66 @@
+Parsing succeeded!
+Result:
+eval
+args: (
+|_St
+|_conj
+|_args: (
+| |_X
+| |_Y
+|_)
+|_U
+)
+body: [
+|_eval
+|_args: (
+| |_St
+| |_X
+| |_V
+|_)
+|_eval
+|_args: (
+| |_St
+| |_Y
+| |_W
+|_)
+|_and
+|_args: (
+| |_V
+| |_W
+| |_U
+|_)
+]
+
+elem
+args: (
+|_zero
+|_args: (
+
+|_)
+|_cons
+|_args: (
+| |_H
+| |_T
+|_)
+|_H
+)
+body: [
+
+]
+
+[eval
+args: (
+|_St
+|_true
+|_args: (
+
+|_)
+|_not
+|_args: (
+| |_mem
+| |_args: (
+| | |_Z
+| |_)
+|_)
+)]
+Suffix:	InputStream {stream = "", curPos = 110}
