@@ -45,7 +45,7 @@ parseArgs = ((:) <$> (parseArg) <*> many(matchString "," *> parseArg))
 parseRelations :: Parser String String AST
 parseRelations = do
     name <- parseIdent
-    args <- ((matchString "(" *> parseArgs) <* matchString ")") -- <|> (pure [])
+    args <- ((matchString "(" *> parseArgs) <* matchString ")") <|> (pure [])
     body <- (matchString ":-" *> parseBody) <|> (pure [])
     matchString "."
     return $ Relation name args body
@@ -72,7 +72,7 @@ parseProg = Parser $ \input -> runParser' parseProg' (fmap modifyInput input) wh
 
 instance Show Program where
   show (Program rel targ) =
-    printf "%s\n\n%s" (intercalate "\n\n" $ map show rel) (show targ)
+    printf "%s\n\n\ngoal: [\n%s\n]" (intercalate "\n\n" $ map show rel) (intercalate "\n\n" $ map (showAST 1) targ)
 
 instance Eq Program where
   a == b = (show a) == (show b)

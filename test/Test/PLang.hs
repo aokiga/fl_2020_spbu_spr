@@ -87,3 +87,4 @@ unit_parseProg = do
     let program = Program [rel1, rel2] [Atom "eval" [Var "St", Atom "true" [], Atom "not" [Atom "mem" [Var "Z"]]]]
 
     runParser parseProg code @?= Success (toStream "" 110) program
+    runParser parseProg "true.false.true.\n?- true." @?= Success (toStream "" 23) (Program [Relation "true" [] [], Relation "false" [] [], Relation "true" [] []] [Atom "true" []])
